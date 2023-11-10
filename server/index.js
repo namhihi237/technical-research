@@ -2,6 +2,9 @@ const express = require('express');
 const app = express();
 require('dotenv').config();
 const cors = require('cors');
+const speakeasy = require('speakeasy');
+const QRCode = require('qrcode');
+
 const AWS = require('aws-sdk');
 const corsOptions = {
   exposedHeaders: ['ETag'],
@@ -27,6 +30,46 @@ const s3 = new AWS.S3({
   region: process.env.AWS_REGION,
   endpoint: process.env.END_POINT,
 });
+
+app.get('/generate-secret', (req, res) => {
+  const secret = speakeasy.generateSecret({ length: 20 });
+  res.send(secret);
+});
+
+app.get('/generate-qr', async (req, res) => {
+  const customName = "Poppy";
+  const customAvatarUrl = "https://res.cloudinary.com/tutotring/image/upload/v1699610578/Icon-App-29x29_3x_oxw7le.png";
+  const secret = speakeasy.generateSecret({ length: 20 });
+  const otpauthUrl = `otpauth://totp/${encodeURIComponent(customName)}?secret=${secret.base32}&issuer=${encodeURIComponent(customName)}&image=${encodeURIComponent(customAvatarUrl)}`;
+  const qrCodeUrl = await QRCode.toDataURL(otpauthUrl);
+
+  res.send(`
+    <div>
+      <h2>Scan the QR Code with a TOTP App</h2>
+      <img src="${qrCodeUrl}" alt="QR Code">
+    </div>
+  `);
+});
+
+
+app.post('/verify-totp', (req, res) => {
+  const { token, secret } = req.body;
+
+  const verified = speakeasy.totp.verify({
+    secret: secret,
+    encoding: 'base32',
+    token: token,
+  });
+
+  if (verified) {
+    res.send({ status: 'success', message: 'Two-Factor Authentication successful!' });
+  } else {
+    res.send({ status: 'error', message: 'Invalid token. Please try again.' });
+  }
+});
+
+
+
 
 // Presigned URL Generator
 function generatePresignedUrl(key) {
