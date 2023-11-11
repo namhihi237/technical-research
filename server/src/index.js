@@ -3,9 +3,9 @@ const app = express();
 require('dotenv').config();
 const cors = require('cors');
 const speakeasy = require('speakeasy');
-const QRCode = require('qrcode');
 
 const uploadRoute = require('./modules/upload/route');
+const twoFARoute = require('./modules/2fa/route');
 
 const corsOptions = {
   exposedHeaders: ['ETag'],
@@ -25,27 +25,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(uploadRoute);
-
-app.get('/generate-secret', (req, res) => {
-  const secret = speakeasy.generateSecret({ length: 20 });
-  res.send(secret);
-});
-
-app.get('/generate-qr', async (req, res) => {
-  const customName = "Poppy";
-  const customAvatarUrl = "https://res.cloudinary.com/tutotring/image/upload/v1699610578/Icon-App-29x29_3x_oxw7le.png";
-  const secret = speakeasy.generateSecret({ length: 20 });
-  const otpauthUrl = `otpauth://totp/${encodeURIComponent(customName)}?secret=${secret.base32}&issuer=${encodeURIComponent(customName)}&image=${encodeURIComponent(customAvatarUrl)}`;
-  const qrCodeUrl = await QRCode.toDataURL(otpauthUrl);
-
-  res.send(`
-    <div>
-      <h2>Scan the QR Code with a TOTP App</h2>
-      <img src="${qrCodeUrl}" alt="QR Code">
-    </div>
-  `);
-});
-
+app.use(twoFARoute);
 
 app.post('/verify-totp', (req, res) => {
   const { token, secret } = req.body;
