@@ -15,7 +15,7 @@ function Upload() {
     }
 
     // Step 1: Initiate Multipart Upload
-    const initiateResponse = await fetch('http://localhost:4242/initiateMultipartUpload', {
+    const initiateResponse = await fetch('http://localhost:4242/upload/init-multiple-part', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -40,12 +40,12 @@ function Upload() {
       const partNumber = i + 1;
 
       // Get Presigned URL for each part
-      const partPresignedUrlResponse = await fetch(`http://localhost:4242/getPresignedUrl/${partNumber}`, {
+      const partPresignedUrlResponse = await fetch(`http://localhost:4242/upload/get-presigned-url`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ fileName: selectedFile.name, uploadId }),
+        body: JSON.stringify({ fileName: selectedFile.name, uploadId, partNumber, type: 'uploadPart' }),
       });
 
 
@@ -74,7 +74,7 @@ function Upload() {
     console.log('File uploaded successfully');
 
     // Step 3: Complete Multipart Upload
-    const completeResponse = await fetch(`http://localhost:4242/completeMultipartUpload`, {
+    const completeResponse = await fetch(`http://localhost:4242/upload/complete-multiple-part`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

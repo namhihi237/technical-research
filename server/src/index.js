@@ -5,6 +5,7 @@ const cors = require('cors');
 const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 
+const uploadRoute = require('./modules/upload/route');
 const AWS = require('aws-sdk');
 const corsOptions = {
   exposedHeaders: ['ETag'],
@@ -24,6 +25,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY, {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use(uploadRoute);
 const s3 = new AWS.S3({
   accessKeyId: process.env.ACCESS_ID,
   secretAccessKey: process.env.AWS_SECRET_KEY,
@@ -66,99 +68,6 @@ app.post('/verify-totp', (req, res) => {
   } else {
     res.send({ status: 'error', message: 'Invalid token. Please try again.' });
   }
-});
-
-
-
-
-// Presigned URL Generator
-function generatePresignedUrl(key) {
-  const params = {
-    Bucket: process.env.AWS_BUCKET_NAME,
-    Key: key,
-    Expires: 360, // URL expires in 60 seconds, adjust as needed,
-    ContentDisposition: 'inline'
-  };
-
-  return s3.getSignedUrl('putObject', params);
-}
-
-// Endpoint to get Presigned URL for a specific part
-app.post('/getPresignedUrl/:partNumber', (req, res) => {
-  const fileName = req.body.fileName;
-  const uploadId = req.body.uploadId;
-  const partNumber = req.params.partNumber;
-
-  const params = {
-    Bucket: process.env.AWS_BUCKET_NAME,
-    Key: fileName,
-    PartNumber: partNumber,
-    UploadId: uploadId,
-  };
-
-  const presignedUrl = s3.getSignedUrl('uploadPart', params);
-
-  res.status(200).json({ presignedUrl });
-});
-
-
-// Endpoint to initiate Multipart Upload
-app.post('/initiateMultipartUpload', (req, res) => {
-  const fileName = req.body.fileName;
-
-  const params = {
-    Bucket: process.env.AWS_BUCKET_NAME,
-    Key: fileName,
-  };
-
-  s3.createMultipartUpload(params, (err, data) => {
-    if (err) {
-      console.error(err);
-      res.status(500).json({ error: 'Error initiating Multipart Upload' });
-    } else {
-      res.status(200).json({ uploadId: data.UploadId });
-    }
-  });
-});
-
-app.post('/completeMultipartUpload', (req, res) => {
-  const fileName = req.body.fileName;
-  const uploadId = req.body.uploadId;
-  const parts = req.body.parts;
-
-  const params = {
-    Bucket: process.env.AWS_BUCKET_NAME,
-    Key: fileName,
-    UploadId: uploadId,
-    MultipartUpload: {
-      Parts: parts.map((part) => {
-        return {
-          ETag: part.ETag,
-          PartNumber: part.PartNumber,
-        };
-      }),
-    },
-  };
-
-  s3.completeMultipartUpload(params, (err, data) => {
-    if (err) {
-      console.error(err);
-      res.status(500).json({ error: 'Error completing Multipart Upload' });
-    } else {
-      res.status(200).json({ message: 'Multipart Upload completed successfully' });
-    }
-  });
-});
-
-
-// Upload Route
-app.post('/get-signed-url', (req, res) => {
-  const fileName = req.body.fileName;
-
-  // Generate Presigned URL
-  const presignedUrl = generatePresignedUrl(fileName);
-
-  res.status(200).json({ presignedUrl });
 });
 
 
