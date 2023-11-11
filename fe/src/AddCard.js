@@ -1,15 +1,19 @@
 import React from 'react';
-import AddCard from './AddCard'; // Import component AddCard
+import { Elements } from '@stripe/react-stripe-js';
+import CheckoutForm from './CheckoutForm';
 
-function AddCardPage(props) {
+function AddCard(props) {
   const { stripePromise } = props;
-
   return (
-    <div>
+    <>
       <h1>Add Card</h1>
-      <AddCard stripePromise={stripePromise} />
-    </div>
+      {stripePromise && (
+        <Elements stripe={stripePromise}>
+          <CheckoutForm />
+        </Elements>
+      )}
+    </>
   );
 }
 
-export default AddCardPage;
+export default AddCard;
