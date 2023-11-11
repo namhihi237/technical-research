@@ -13,9 +13,7 @@ async function initiateMultipartUpload(req, res) {
 
 async function completeMultipartUpload(req, res) {
   try {
-    const fileName = req.body.fileName;
-    const uploadId = req.body.uploadId;
-    const parts = req.body.parts;
+    const {fileName, uploadId, parts} = req.body;
 
     await aws.completeMultipartUpload(fileName, uploadId, parts);
     return res.status(200).json({});
@@ -26,11 +24,11 @@ async function completeMultipartUpload(req, res) {
 
 async function getPresignedUrl(req, res) {
   try {
-    const fileName = req.body.fileName;
-    const uploadId = req.body.uploadId;
-    const partNumber = req.body.partNumber;
+    const {fileName, uploadId, partNumber} = req.body;
+
     const type = req.body.type;
     let presignedUrl;
+
     if (type === 'uploadPart') {
       presignedUrl = await aws.generatePresignedUrlWithMultiplePart(fileName, partNumber, uploadId);
     }
