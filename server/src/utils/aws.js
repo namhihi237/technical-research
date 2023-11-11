@@ -73,9 +73,19 @@ async function generatePresignedUrlWithMultiplePart(fileName, partNumber, upload
   return s3.getSignedUrl('uploadPart', params);
 }
 
+async function getSignedUrl(fileName) {
+  const params = {
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: fileName,
+  };
+
+  return s3.getSignedUrl('getObject', params);
+}
+
 module.exports = {
   createMultipartUpload,
   completeMultipartUpload,
   generatePresignedUrl,
-  generatePresignedUrlWithMultiplePart
+  generatePresignedUrlWithMultiplePart,
+  getSignedUrl
 }

@@ -83,7 +83,7 @@ function Upload() {
     });
 
     if (completeResponse.ok) {
-      const fileUpload = await fetch(`http://localhost:4242/file/${selectedFile.name}`, {
+      const fileUpload = await fetch(`http://localhost:4242/upload/${selectedFile.name}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

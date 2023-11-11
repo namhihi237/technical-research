@@ -42,8 +42,20 @@ async function getPresignedUrl(req, res) {
   }
 }
 
+async function getSignedUrl(req, res) {
+  try {
+    const {fileName} = req.params;
+    const fileUrl = await aws.getSignedUrl(fileName);
+    res.status(200).json({ fileUrl });
+
+  } catch (error) {
+    res.status(500).json({ error: 'Error, try again!' });
+  }
+}
+
 module.exports = {
   initiateMultipartUpload,
   completeMultipartUpload,
-  getPresignedUrl
+  getPresignedUrl,
+  getSignedUrl
 }

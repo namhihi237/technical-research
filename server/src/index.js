@@ -6,7 +6,7 @@ const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 
 const uploadRoute = require('./modules/upload/route');
-const AWS = require('aws-sdk');
+
 const corsOptions = {
   exposedHeaders: ['ETag'],
 };
@@ -21,17 +21,10 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY, {
   }
 });
 
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(uploadRoute);
-const s3 = new AWS.S3({
-  accessKeyId: process.env.ACCESS_ID,
-  secretAccessKey: process.env.AWS_SECRET_KEY,
-  region: process.env.AWS_REGION,
-  endpoint: process.env.END_POINT,
-});
 
 app.get('/generate-secret', (req, res) => {
   const secret = speakeasy.generateSecret({ length: 20 });
@@ -69,23 +62,6 @@ app.post('/verify-totp', (req, res) => {
     res.send({ status: 'error', message: 'Invalid token. Please try again.' });
   }
 });
-
-
-// Endpoint to get public URL of an uploaded file
-app.get('/file/:fileName', (req, res) => {
-  const fileName = req.params.fileName;
-
-  // Generate public URL
-  const params = {
-    Bucket: process.env.AWS_BUCKET_NAME,
-    Key: fileName,
-  };
-
-  const fileUrl = s3.getSignedUrl('getObject', params);
-
-  res.status(200).json({ fileUrl });
-});
-
 
 app.use(
   express.json({
