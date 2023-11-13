@@ -22,6 +22,27 @@ async function generateQr(req, res) {
   }
 }
 
+async function verify2Fa(req, res) {
+  try {
+    const { token, secret } = req.body;
+
+    const verified = speakeasy.totp.verify({
+      secret: secret,
+      encoding: 'base32',
+      token: token,
+    });
+
+    if (verified) {
+      res.status(200).json({ status: 'success', message: 'Two-Factor Authentication successful!' });
+    } else {
+      res.status(401).json({ status: 'error', message: 'Invalid token. Please try again.' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Error, try again!' });
+  }
+}
+
 module.exports = {
-  generateQr
+  generateQr,
+  verify2Fa
 }
