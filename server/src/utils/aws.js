@@ -1,3 +1,5 @@
+'use strict';
+
 const AWS = require('aws-sdk');
 
 const s3 = new AWS.S3({
@@ -23,7 +25,6 @@ async function createMultipartUpload(fileName) {
     });
   });
 }
-
 
 async function completeMultipartUpload(fileName, uploadId, parts) {
   return new Promise((resolve, reject) => {
@@ -52,7 +53,7 @@ async function completeMultipartUpload(fileName, uploadId, parts) {
 }
 
 async function generatePresignedUrl(fileName) {
-    const params = {
+  const params = {
     Bucket: process.env.AWS_BUCKET_NAME,
     Key: fileName,
     Expires: 360,
@@ -62,7 +63,7 @@ async function generatePresignedUrl(fileName) {
   return s3.getSignedUrl('putObject', params);
 }
 
-async function generatePresignedUrlWithMultiplePart(fileName, partNumber, uploadId ) {
+async function generatePresignedUrlWithMultiplePart(fileName, partNumber, uploadId) {
   const params = {
     Bucket: process.env.AWS_BUCKET_NAME,
     Key: fileName,

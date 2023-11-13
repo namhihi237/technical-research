@@ -7,6 +7,7 @@ const speakeasy = require('speakeasy');
 const uploadRoute = require('./modules/upload/route');
 const twoFARoute = require('./modules/2fa/route');
 const stripeRoute = require('./modules/stripe/route');
+const paypalRoute = require('./modules/paypal/route');
 
 app.use(cors());
 app.use(express.json());
@@ -15,22 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(uploadRoute);
 app.use(twoFARoute);
 app.use(stripeRoute);
-
-app.post('/verify-totp', (req, res) => {
-  const { token, secret } = req.body;
-
-  const verified = speakeasy.totp.verify({
-    secret: secret,
-    encoding: 'base32',
-    token: token,
-  });
-
-  if (verified) {
-    res.send({ status: 'success', message: 'Two-Factor Authentication successful!' });
-  } else {
-    res.send({ status: 'error', message: 'Invalid token. Please try again.' });
-  }
-});
+app.use(paypalRoute);
 
 app.use(
   express.json({
