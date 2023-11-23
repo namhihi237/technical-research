@@ -18,6 +18,7 @@ async function completeMultipartUpload(req, res) {
     await aws.completeMultipartUpload(fileName, uploadId, parts);
     return res.status(200).json({});
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: 'Error, try again!' });
   }
 }
@@ -38,6 +39,7 @@ async function getPresignedUrl(req, res) {
 
     res.status(200).json({ presignedUrl });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: 'Error, try again!' });
   }
 }

@@ -1,8 +1,10 @@
+/* eslint-disable no-loop-func */
 import React, { useState } from 'react';
 
 function Upload() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [fileUrl, setFileUrl] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const handleFileChange = (event) => {
     setSelectedFile(event.target.files[0]);
@@ -31,7 +33,6 @@ function Upload() {
     const totalParts = Math.ceil(selectedFile.size / chunkSize);
     const parts = [];
 
-
     for (let i = 0; i < totalParts; i++) {
       const start = i * chunkSize;
       const end = Math.min((i + 1) * chunkSize, selectedFile.size);
@@ -54,11 +55,41 @@ function Upload() {
 
       const partPresignedUrl = partPresignedUrlData.presignedUrl;
 
+      const uploadPartResult = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
 
-      // Upload part to Presigned URL
-      const uploadPartResult = await fetch(partPresignedUrl, {
-        method: 'PUT',
-        body: filePart,
+        xhr.open('PUT', partPresignedUrl, true);
+
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable) {
+            const totalUpload = i * chunkSize + event.loaded;
+            const cumulativeProgress = (totalUpload / selectedFile.size) * 100;
+            console.log(cumulativeProgress);
+            setUploadProgress(cumulativeProgress);
+          }
+
+        });
+
+        xhr.onload = () => {
+          const headers = new Headers();
+          xhr.getAllResponseHeaders().split('\r\n').forEach((header) => {
+            const [name, value] = header.split(': ');
+            if (name && value) {
+              headers.append(name, value);
+            }
+          });
+
+          resolve({
+            ok: xhr.status >= 200 && xhr.status < 300,
+            headers,
+          });
+        };
+
+        xhr.onerror = () => {
+          reject(new Error('Network request failed'));
+        };
+
+        xhr.send(filePart);
       });
 
       if (!uploadPartResult.ok) {
@@ -83,7 +114,7 @@ function Upload() {
     });
 
     if (completeResponse.ok) {
-      const fileUpload = await fetch(`http://localhost:4242/upload/${selectedFile.name}`, {
+      const fileUpload = await fetch(`http://localhost:4242/upload/${selectedFile.name}?response-content-disposition=inline`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -102,6 +133,17 @@ function Upload() {
       <input type="file" onChange={handleFileChange} />
       <button onClick={handleUpload}>Upload</button>
       {fileUrl && <a href={fileUrl} target='_blank' rel="noreferrer"> url </a>}
+      {uploadProgress > -1 && <div>Upload Progress: {uploadProgress.toFixed(2)}%</div>}
+
+      {fileUrl && (
+        <div>
+          <video width="1020" height="820" controls>
+            <source src={fileUrl} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      )}
+
     </>
   );
 }

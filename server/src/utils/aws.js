@@ -71,7 +71,7 @@ async function generatePresignedUrlWithMultiplePart(fileName, partNumber, upload
     UploadId: uploadId,
   };
 
-  return s3.getSignedUrl('uploadPart', params);
+  return s3.getSignedUrlPromise('uploadPart', params);
 }
 
 async function getSignedUrl(fileName) {
